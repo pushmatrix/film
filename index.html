@@ -1,0 +1,108 @@
+<html>
+<head>
+  <title></title>
+  <style type="text/css">
+    body {
+      font-family: Courier;
+    }
+
+    #filmstrip {
+      overflow:scroll;
+      height: 400px;
+    }
+    #container {
+      width: 400px;
+      margin: 0px auto;
+    }
+    body {
+      line-height: 1px;
+    }
+    #webcam {
+      display: none;
+    }
+  </style>
+  <script src="jquery.js" ></script>
+  <script type="text/javascript" src='shim.js'></script>
+  <script type="text/javascript">
+    $(function(){
+      var video,
+          context,
+          canvas,
+          frameIndex = 0,
+          playing = true;
+
+      $('#button').click(function() {
+        playing = !playing;
+        if (playing) {
+          $(this).attr('value', 'Stop recording');
+        } else {
+          $(this).attr('value', 'Start recording');
+        }
+      });
+
+      function readFrame() {
+        try {
+          context.drawImage(video, 0, 0, width, height);
+        } catch (e) {
+          // The video may not be ready, yet.
+          return null;
+        }
+
+        return context.getImageData(0, 0, width, height);
+      }
+
+      function draw() {
+        var frame = readFrame();
+        if (frame) {
+          context.putImageData(frame, 0, 0);
+        }
+        if (frameIndex % 5 == 0 && playing) {
+          image = document.createElement('image');
+          image.src = canvas.toDataURL("image/jpeg");
+          $('#filmstrip').prepend(image);
+        }
+
+        frameIndex++;
+        // Wait for the next frame.
+        requestAnimationFrame(draw);
+      }
+
+      function startStream(stream) {
+        video.src = URL.createObjectURL(stream);
+        video.play();
+
+        // Ready! Let's start drawing.
+        requestAnimationFrame(draw);
+      }
+
+      function initialize() {
+        // The source video.
+        video = document.getElementById("webcam");
+        width = video.width;
+        height = video.height;
+
+        canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        context = canvas.getContext('2d');
+
+
+        navigator.getUserMedia({video: true}, startStream, function () { alert("Couldn't start the webcam :(")});
+      }
+
+      initialize();
+
+    });
+  </script>
+</head>
+<body>
+  <div id='container'>
+    <div id='filmstrip'></div>
+    <p>Have fun scrolling the "image" above.</p>
+    <p>Works in Chrome.</p>
+    <input id="button" type='button' value="Stop recording"></input>
+    <video id="webcam" width="400" height="400"></video>
+  </div>
+</body>
+</html>
